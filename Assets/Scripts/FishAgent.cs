@@ -17,6 +17,8 @@ public class FishAgent : MonoBehaviour
 
     [HideInInspector]
     public float perceptionRadius = 1f;
+    [HideInInspector]
+    public float maxForce = 5.0f;
 
     // screen related
     private Camera mainCamera;
@@ -78,6 +80,25 @@ public class FishAgent : MonoBehaviour
         fForceScale = forceScale;
     }
 
+    public Vector3 CalculateInverseSquareVectorWithClamp(Vector3 pointA, Vector3 pointB)
+    {
+        const float epsilon = 1e-6f;
+
+        Vector3 difference = pointA - pointB;
+        float distanceSquared = difference.sqrMagnitude;
+
+        // ignore special case
+        if (distanceSquared < epsilon)
+        {
+            return Vector3.zero;
+        }
+
+        float forceMagnitude = 1 / distanceSquared;
+        forceMagnitude = Mathf.Clamp(forceMagnitude, 0, maxForce);
+
+        return difference.normalized * forceMagnitude;
+    }
+
     public void SenseNeighbors(List<FishAgent> fishAgents)
     {
         List<FishAgent> neighbors = new List<FishAgent>();
@@ -99,14 +120,29 @@ public class FishAgent : MonoBehaviour
             
         }
 
+        // caculate forces
+        Vector3 sperationForce = Vector3.zero;
+        foreach (FishAgent agent in neighbors)
+        {
+            // calculate the seperation force from neighbors
+            Vector3 localForce = CalculateInverseSquareVectorWithClamp(
+                this.transform.position, agent.transform.position
+                );
+            sperationForce += localForce;
+
+        }
+        force = sperationForce;
+
         // for display 
         if (isHighlighted)
         {
             lineRenderer.positionCount = neighbors.Count * 2;
 
+            
             for(int i = 0; i < neighbors.Count; i++)
             {
                 FishAgent agent = neighbors[i];
+                // for demostration
                 agent.rend.material.color = perceptedColor;
                 lineRenderer.SetPosition(2 * i, this.transform.position);
                 lineRenderer.SetPosition(2*i+1, agent.transform.position);
@@ -116,6 +152,9 @@ public class FishAgent : MonoBehaviour
             {
                 agent.rend.material.color = defaultColor;
             }
+        } else
+        {
+            lineRenderer.positionCount = 0;
         }
     }
 

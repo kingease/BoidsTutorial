@@ -35,7 +35,7 @@ public class FishMananger : MonoBehaviour
             agents.Add(agent);
         }
 
-        HighLightFish(10);
+        HighLightFish(-1);
     }
 
     void HighLightFish(int index)
@@ -74,10 +74,10 @@ public class FishMananger : MonoBehaviour
         {
             if (currentIndex >= 0)
             {
-                HighLightFish(10);
+                HighLightFish(-1);
             }else
             {
-                HighLightFish(-1);
+                HighLightFish(10);
             }
         }
     }

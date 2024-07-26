@@ -153,7 +153,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fishAgentPrefab: {fileID: 1744463032179072310, guid: 54398a2e1fa54fe40b41bb599db9348a,
     type: 3}
-  fishCount: 50
+  fishCount: 100
   fForceScale: 0
   neighborRadius: 1
   maskMaterial: {fileID: 0}
