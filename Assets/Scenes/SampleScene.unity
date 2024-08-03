@@ -155,9 +155,9 @@ MonoBehaviour:
     type: 3}
   fishCount: 100
   fForceScale: 1
-  neighborRadius: 1
+  neighborRadius: 0.5
   alignNeiborScale: 3
-  alignCoeff: 0
+  alignCoeff: 0.5
   maskMaterial: {fileID: 0}
 --- !u!4 &104748419
 Transform:
