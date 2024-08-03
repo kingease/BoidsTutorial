@@ -16,7 +16,13 @@ public class FishAgent : MonoBehaviour
     public float fForceScale = 0.0f;
 
     [HideInInspector]
-    public float perceptionRadius = 1f;
+    public float SepPerceptionRadius;
+
+    [HideInInspector]
+    public float alignPerceptionRadius;
+
+    public float alignForceCoeff;
+
     [HideInInspector]
     public float maxForce = 5.0f;
 
@@ -41,7 +47,7 @@ public class FishAgent : MonoBehaviour
     {
         perceptionCircle.transform.position = transform.position;
         perceptionCircle.transform.rotation = transform.rotation;
-        perceptionCircle.transform.localScale = Vector3.one * perceptionRadius * 2;
+        perceptionCircle.transform.localScale = Vector3.one * SepPerceptionRadius * 2;
     }
     private void Awake()
     {
@@ -50,9 +56,9 @@ public class FishAgent : MonoBehaviour
         // screen bounds
         mainCamera = Camera.main;
         speed = 1.0f;
-        perceptionRadius = 1f;
-
-
+        SepPerceptionRadius = 1f;
+        alignPerceptionRadius = 2f;
+        alignForceCoeff = 3.0f;
 
         //demostration
         isHighlighted = false;
@@ -76,8 +82,16 @@ public class FishAgent : MonoBehaviour
     {
     }
 
-    public void UpdateArgs(float forceScale){
+    public void UpdateArgs(
+        float forceScale,
+        float sepRadius,
+        float alignRadius,
+        float alignForceCeoff
+    ){
         fForceScale = forceScale;
+        SepPerceptionRadius = sepRadius;
+        alignPerceptionRadius = alignRadius;
+        alignForceCoeff = alignForceCeoff;
     }
 
     public Vector3 CalculateInverseSquareVectorWithClamp(Vector3 pointA, Vector3 pointB)
@@ -103,12 +117,14 @@ public class FishAgent : MonoBehaviour
     {
         List<FishAgent> neighbors = new List<FishAgent>();
         List<FishAgent> noNeighbors = new List<FishAgent>();
+
+        List<FishAgent> alignNeighbors = new List<FishAgent>();
         foreach (FishAgent agent in fishAgents)
         {
             if (agent != this)
             {
                 float dist = Vector3.Distance(agent.transform.position, transform.position);
-                if (dist < perceptionRadius && agent != this)
+                if (dist < SepPerceptionRadius && agent != this)
                 {
                     neighbors.Add(agent);
                 }
@@ -116,46 +132,77 @@ public class FishAgent : MonoBehaviour
                 {
                     noNeighbors.Add(agent);
                 }
+
+                if (dist < alignPerceptionRadius && agent != this)
+                {
+                    alignNeighbors.Add(agent);
+                }
             }
-            
-        }
-
-        // caculate forces
-        Vector3 sperationForce = Vector3.zero;
-        foreach (FishAgent agent in neighbors)
-        {
-            // calculate the seperation force from neighbors
-            Vector3 localForce = CalculateInverseSquareVectorWithClamp(
-                this.transform.position, agent.transform.position
-                );
-            sperationForce += localForce;
 
         }
-        force = sperationForce;
+
+        Vector3 seperationForce = CalcuateSepForce(neighbors);
+
+        Vector3 alignForce = CalculateAlignForce(alignNeighbors);
+
+        force = (seperationForce + alignForce * alignForceCoeff) / (1f + alignForceCoeff);
 
         // for display 
         if (isHighlighted)
         {
             lineRenderer.positionCount = neighbors.Count * 2;
 
-            
-            for(int i = 0; i < neighbors.Count; i++)
+
+            for (int i = 0; i < neighbors.Count; i++)
             {
                 FishAgent agent = neighbors[i];
                 // for demostration
                 agent.rend.material.color = perceptedColor;
                 lineRenderer.SetPosition(2 * i, this.transform.position);
-                lineRenderer.SetPosition(2*i+1, agent.transform.position);
+                lineRenderer.SetPosition(2 * i + 1, agent.transform.position);
             }
 
             foreach (FishAgent agent in noNeighbors)
             {
                 agent.rend.material.color = defaultColor;
             }
-        } else
+        }
+        else
         {
             lineRenderer.positionCount = 0;
         }
+    }
+
+    private Vector3 CalcuateSepForce(List<FishAgent> neighbors)
+    {
+        // caculate seperation forces
+        Vector3 seperationForce = Vector3.zero;
+        foreach (FishAgent agent in neighbors)
+        {
+            // calculate the seperation force from neighbors
+            Vector3 localForce = CalculateInverseSquareVectorWithClamp(
+                transform.position, agent.transform.position
+                );
+            seperationForce += localForce;
+
+        }
+
+        return seperationForce;
+    }
+
+    private Vector3 CalculateAlignForce(List<FishAgent> alignNeighbors)
+    {
+        // calculate alignment force
+        Vector3 alignDir = Vector3.zero;
+        foreach (FishAgent agent in alignNeighbors)
+        {
+            Vector3 v = agent.direction;
+            alignDir += v;
+        }
+        alignDir = alignNeighbors.Count > 1 ? alignDir / alignNeighbors.Count : (Vector3)direction;
+
+        Vector3 alignForce = alignDir.normalized - (Vector3)direction;
+        return alignForce;
     }
 
     public void HighLight(bool isHighLight)
@@ -204,7 +251,7 @@ public class FishAgent : MonoBehaviour
         // update direction
         direction = transform.up;
         // update speed
-        speed = Mathf.Min(velocity.magnitude, 3f);
+        speed = Mathf.Min(velocity.magnitude, 2.5f);
 
 
         // update new position

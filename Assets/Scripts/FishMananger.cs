@@ -12,8 +12,13 @@ public class FishMananger : MonoBehaviour
     [Range(0, 15)]
     public float fForceScale = 0.0f;
 
-    [Range(1, 5)]
+    [Range(0.1f, 5f)]
     public float neighborRadius;
+    [Range(1f, 20f)]
+    public float alignNeiborScale;
+
+    [Range(0f, 10f)]
+    public float alignCoeff;
 
     public Material maskMaterial;
 
@@ -53,7 +58,7 @@ public class FishMananger : MonoBehaviour
         }
         else
         {
-            highLightedFish.HighLight(false);
+            highLightedFish?.HighLight(false);
             currentIndex = -1;
         }
     }
@@ -66,7 +71,8 @@ public class FishMananger : MonoBehaviour
     void Update()
     {
         foreach(FishAgent agent in agents){
-            agent.UpdateArgs(fForceScale);
+            agent.UpdateArgs(fForceScale, neighborRadius, 
+                neighborRadius*alignNeiborScale, alignCoeff);
             agent.SenseNeighbors(agents);
         }
 
