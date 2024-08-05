@@ -22,6 +22,7 @@ public class FishAgent : MonoBehaviour
     public float alignPerceptionRadius;
 
     public float alignForceCoeff;
+    public float cohereForceCoeff;
 
     [HideInInspector]
     public float maxForce = 5.0f;
@@ -59,6 +60,7 @@ public class FishAgent : MonoBehaviour
         SepPerceptionRadius = 1f;
         alignPerceptionRadius = 2f;
         alignForceCoeff = 3.0f;
+        cohereForceCoeff = 1.0f;
 
         //demostration
         isHighlighted = false;
@@ -86,12 +88,15 @@ public class FishAgent : MonoBehaviour
         float forceScale,
         float sepRadius,
         float alignRadius,
-        float alignForceCeoff
-    ){
+        float alignForceCoeff,
+        float cohereForceCoeff
+    )
+    {
         fForceScale = forceScale;
         SepPerceptionRadius = sepRadius;
         alignPerceptionRadius = alignRadius;
-        alignForceCoeff = alignForceCeoff;
+        this.alignForceCoeff = alignForceCoeff;
+        this.cohereForceCoeff = cohereForceCoeff;
     }
 
     public Vector3 CalculateInverseSquareVectorWithClamp(Vector3 pointA, Vector3 pointB)
@@ -145,7 +150,9 @@ public class FishAgent : MonoBehaviour
 
         Vector3 alignForce = CalculateAlignForce(alignNeighbors);
 
-        force = (seperationForce + alignForce * alignForceCoeff) / (1f + alignForceCoeff);
+        Vector3 cohereForce = CalculateCohereForce(alignNeighbors);
+
+        force = (seperationForce + alignForce * alignForceCoeff + cohereForce * cohereForceCoeff) / (1f + alignForceCoeff + cohereForceCoeff);
 
         // for display 
         if (isHighlighted)
@@ -203,6 +210,26 @@ public class FishAgent : MonoBehaviour
 
         Vector3 alignForce = alignDir.normalized - (Vector3)direction;
         return alignForce;
+    }
+
+    private Vector3 CalculateCohereForce(List<FishAgent> alignNeighbors)
+    {
+        Vector3 cohereCenter = Vector3.zero;
+        if (alignNeighbors.Count == 0)
+        {
+            cohereCenter = transform.position;
+        }
+        else
+        {
+            foreach (FishAgent agent in alignNeighbors)
+            {
+                cohereCenter += agent.transform.position;
+            }
+            cohereCenter = cohereCenter / alignNeighbors.Count;
+        }
+
+        Vector3 cohereForce = cohereCenter - transform.position;
+        return cohereForce;
     }
 
     public void HighLight(bool isHighLight)

@@ -20,6 +20,9 @@ public class FishMananger : MonoBehaviour
     [Range(0f, 10f)]
     public float alignCoeff;
 
+    [Range(0f, 10f)]
+    public float cohereCoeff;
+
     public Material maskMaterial;
 
     private List<FishAgent> agents;
@@ -72,7 +75,9 @@ public class FishMananger : MonoBehaviour
     {
         foreach(FishAgent agent in agents){
             agent.UpdateArgs(fForceScale, neighborRadius, 
-                neighborRadius*alignNeiborScale, alignCoeff);
+                neighborRadius*alignNeiborScale, 
+                alignCoeff, 
+                cohereCoeff);
             agent.SenseNeighbors(agents);
         }
 
